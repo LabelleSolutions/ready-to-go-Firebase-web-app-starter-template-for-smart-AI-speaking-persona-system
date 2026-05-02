@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Smart AI Speaking Coach (Firebase Full App)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Firebase 9 compat SDKs (CDN, no bundler required) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #f7fafc;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2em;
+      }
+      h1 {
+        color: #23447a;
+      }
+      .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1.4em 1.2em;
+        margin-bottom: 2em;
+        box-shadow: 0 1px 8px #0001;
+      }
+      .tab-btn {
+        background: #d0e6fc;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5em 1.2em;
+        margin-right: 1em;
+        font-size: 1em;
+        cursor: pointer;
+      }
+      .tab-btn.active {
+        background: #23447a;
+        color: #fff;
+      }
+      .prompt-block {
+        background: #f4f8fc;
+        border-radius: 8px;
+        padding: 1em;
+        margin-bottom: 1.1em;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .prompt-txt {
+        flex: 1;
+      }
+      .speak-btn {
+        margin-left: 1em;
+        background: #23447a;
+        color: #fff;
+        padding: 0.5em 1.1em;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .progress-bar {
+        background: #e5ebf4;
+        border-radius: 6px;
+        width: 100%;
+        margin: 0.4em 0;
+        height: 14px;
+        position: relative;
+      }
+      .prog-fill {
+        background: #2fa37b;
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.3s;
+      }
+      .progress-label {
+        font-size: 0.93em;
+      }
+      .ai-correction {
+        background: #faf7e7;
+        border-radius: 6px;
+        padding: 0.7em 1em;
+        margin-top: 0.7em;
+        border-left: 4px solid #e6b800;
+      }
+      .ai-correction.success {
+        background: #e8faf0;
+        border-left-color: #2fa37b;
+      }
+      textarea {
+        width: 100%;
+        min-height: 60px;
+        padding: 0.5em;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
+      }
+      button,
+      select,
+      input[type='text'] {
+        font-size: 1em;
+      }
+      input[type='text'] {
+        padding: 0.4em 0.6em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      select {
+        padding: 0.3em 0.5em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        padding: 0.4em 1em;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: #d0e6fc;
+      }
+      button:hover {
+        opacity: 0.85;
+      }
+      audio {
+        vertical-align: middle;
+        margin: 0.5em 0;
+        display: block;
+      }
+      .scenario-editor {
+        margin-bottom: 1.5em;
+        padding: 1em;
+        background: #f9fbfe;
+        border-radius: 6px;
+        border: 1px solid #d5e8f8;
+      }
+      .prompt-list {
+        max-height: 260px;
+        overflow-y: auto;
+        border: 1px solid #e0eaf5;
+        border-radius: 6px;
+        padding: 0.5em;
+      }
+      .prompt-list-item {
+        display: flex;
+        align-items: center;
+        padding: 0.4em 0.2em;
+        border-bottom: 1px solid #eef3fb;
+      }
+      .prompt-list-item:last-child {
+        border-bottom: none;
+      }
+      .prompt-list-item span {
+        flex: 1;
+        font-size: 0.92em;
+      }
+      .err {
+        color: #c12000;
+        margin-top: 0.4em;
+      }
+      .success {
+        color: #1a7a45;
+      }
+      .history-tile {
+        background: #f2f6fb;
+        border-radius: 7px;
+        margin-bottom: 0.6em;
+        padding: 0.7em;
+        border-left: 4px solid #8fb8e8;
+      }
+      .history-tile.pass {
+        border-left-color: #2fa37b;
+      }
+      .history-tile.fail {
+        border-left-color: #e05252;
+      }
+      .signout-btn {
+        margin-left: 1em;
+        background: #e8edf5;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.2em 0.7em;
+        border-radius: 10px;
+        font-size: 0.85em;
+        font-weight: bold;
+      }
+      .badge-level {
+        background: #23447a;
+        color: #fff;
+      }
+      .badge-pass {
+        background: #2fa37b;
+        color: #fff;
+      }
+      .badge-fail {
+        background: #e05252;
+        color: #fff;
+      }
+      #recBtn.recording {
+        background: #e05252;
+        color: #fff;
+      }
+      label {
+        display: block;
+        margin: 0.5em 0 0.2em;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎙️ Smart AI Persona – Speaking Coach</h1>
+
+    <!-- Auth block -->
+    <div id="authBlock" class="card"></div>
+
+    <!-- Tab navigation -->
+    <div style="margin-bottom: 1em">
+      <button class="tab-btn active" id="btnStudent">Student Portal</button>
+      <button class="tab-btn" id="btnCoach">Coach / Admin Portal</button>
+    </div>
+
+    <!-- Portal cards -->
+    <div id="studentCard" class="card"></div>
+    <div id="coachCard" class="card" style="display: none"></div>
+
+    <script type="module">
+      // ─────────────────────────────────────────────────────────────
+      // FIREBASE CONFIGURATION
+      // Replace the values below with your Firebase project settings.
+      // ─────────────────────────────────────────────────────────────
+      const firebaseConfig = {
+        apiKey: 'YOUR-API-KEY',
+        authDomain: 'YOUR-PROJECT.firebaseapp.com',
+        projectId: 'YOUR-PROJECT-ID',
+        storageBucket: 'YOUR-PROJECT.appspot.com',
+        appId: 'YOUR-APP-ID',
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+      const auth = firebase.auth();
+
+      // ─────────────────────────────────────────────────────────────
+      // CORE GLOBALS
+      // ─────────────────────────────────────────────────────────────
+      const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+      /** Ordered list of speaking issues the AI checks for. */
+      const CORRECTION_PRIORITIES = [
+        {
+          issue: 'Ending sounds',
+          cmd: 'Finish your ending sounds clearly.',
+          example: 'cat → ca-T, dog → do-G',
+        },
+        {
+          issue: 'Voice projection',
+          cmd: 'Project your voice with confidence.',
+          example: 'Speak as if to the back of the room.',
+        },
+        {
+          issue: 'Tone variation',
+          cmd: 'Use more tone variation.',
+          example: 'Rise at questions, fall at statements.',
+        },
+        {
+          issue: 'Breath control',
+          cmd: 'Control your breath between phrases.',
+          example: 'Pause, breathe, then continue.',
+        },
+      ];
+
+      let ALL_SCENARIOS = []; // loaded from Firestore
+      let scenarioIndex = {}; // keyed by `scenario_level_role`
+      let currentUser = null;
+
+      // ─────────────────────────────────────────────────────────────
+      // AUTHENTICATION
+      // ─────────────────────────────────────────────────────────────
+      auth.onAuthStateChanged((u) => {
+        currentUser = u;
+        renderAuthBlock();
+        renderActivePortal();
+      });
+
+      function renderAuthBlock() {
+        const el = document.getElementById('authBlock');
+        if (!currentUser) {
+          el.innerHTML = `
+      <b>Sign In to continue:</b>&nbsp;
+      <button id="googleSignIn">Sign in with Google</button>`;
+          document.getElementById('googleSignIn').onclick = signInGoogle;
+        } else {
+          el.innerHTML = `
+      Signed in as <b>${escHtml(currentUser.displayName || currentUser.email)}</b>
+      <button class="signout-btn" id="signOutBtn">Sign out</button>`;
+          document.getElementById('signOutBtn').onclick = () => auth.signOut();
+        }
+      }
+
+      function signInGoogle() {
+        auth
+          .signInWithPopup(new firebase.auth.GoogleAuthProvider())
+          .catch((err) => {
+            document
+              .getElementById('authBlock')
+              .insertAdjacentHTML(
+                'beforeend',
+                `<p class="err">Sign-in failed: ${escHtml(err.message)}</p>`,
+              );
+          });
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // TAB SWITCHING
+      // ─────────────────────────────────────────────────────────────
+      document.getElementById('btnStudent').onclick = () =>
+        activateTab('student');
+      document.getElementById('btnCoach').onclick = () => activateTab('coach');
+
+      function activateTab(tab) {
+        document
+          .getElementById('btnStudent')
+          .classList.toggle('active', tab === 'student');
+        document
+          .getElementById('btnCoach')
+          .classList.toggle('active', tab === 'coach');
+        document.getElementById('studentCard').style.display =
+          tab === 'student' ? '' : 'none';
+        document.getElementById('coachCard').style.display =
+          tab === 'coach' ? '' : 'none';
+        renderActivePortal();
+      }
+
+      function renderActivePortal() {
+        const isCoach = document
+          .getElementById('btnCoach')
+          .classList.contains('active');
+        if (isCoach) renderCoach();
+        else renderStudent();
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // SCENARIO BANK — FIRESTORE LOAD
+      // ─────────────────────────────────────────────────────────────
+      async function loadScenarioBank() {
+        const snap = await db.collection('scenarios').get();
+        ALL_SCENARIOS = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        scenarioIndex = buildIndex(ALL_SCENARIOS);
+      }
+
+      /** Build a lookup map: "scenario_level_role" → [prompts] */
+      function buildIndex(rows) {
+        const idx = {};
+        rows.forEach((r) => {
+          const k = indexKey(r.scenario, r.level, r.role);
+          if (!idx[k]) idx[k] = [];
+          idx[k].push(r);
+        });
+        return idx;
+      }
+
+      function indexKey(scenario, level, role) {
+        return `${scenario}__${level}__${role}`;
+      }
+
+      function distinctScenarios() {
+        return [...new Set(ALL_SCENARIOS.map((r) => r.scenario))].sort();
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // STUDENT PORTAL
+      // ─────────────────────────────────────────────────────────────
+      async function renderStudent() {
+        if (!currentUser) {
+          document.getElementById('studentCard').innerHTML =
+            '<p>Please sign in to access the student portal.</p>';
+          return;
+        }
+        await loadScenarioBank();
+        const st = await getStudentState();
+        const scenList = distinctScenarios();
+
+        if (!scenList.length) {
+          document.getElementById('studentCard').innerHTML =
+            '<p>Scenario bank is empty. Ask a Coach to add prompts first.</p>';
+          return;
+        }
+
+        document.getElementById('studentCard').innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:0.8em;align-items:center;margin-bottom:1em;">
+      <label style="margin:0;">Level:
+        <select id="selLevel">${LEVELS.map(
+          (l) => `<option${st.level === l ? ' selected' : ''}>${l}</option>`,
+        ).join('')}
+        </select>
+      </label>
+      <label style="margin:0;">Scenario:
+        <select id="selScenario">${scenList
+          .map(
+            (s) =>
+              `<option${st.scenario === s ? ' selected' : ''}>${s}</option>`,
+          )
+          .join('')}
+        </select>
+      </label>
+      <button id="startStudentBtn" style="background:#23447a;color:#fff;">▶ Start / Refresh</button>
+    </div>
+    <div id="studentUI"></div>`;
+
+        document.getElementById('startStudentBtn').onclick = startStudent;
+
+        if (st.level && st.scenario) await renderStudentApp();
+      }
+
+      async function startStudent() {
+        const level = document.getElementById('selLevel').value;
+        const scenario = document.getElementById('selScenario').value;
+        await db.collection('progress').doc(currentUser.uid).set(
+          {
+            uid: currentUser.uid,
+            level,
+            scenario,
+            progress: [],
+            correctStreak: 0,
+          },
+          { merge: true },
+        );
+        await renderStudentApp();
+      }
+
+      async function getStudentState() {
+        const doc = await db.collection('progress').doc(currentUser.uid).get();
+        return doc.exists ? doc.data() : { uid: currentUser.uid };
+      }
+
+      async function renderStudentApp() {
+        const st = await getStudentState();
+        if (!st.level || !st.scenario) return;
+
+        const prompts =
+          scenarioIndex[indexKey(st.scenario, st.level, 'system')] || [];
+        const done = (st.progress || []).length;
+        const total = prompts.length;
+        const pct = total ? Math.round((done * 100) / total) : 0;
+
+        document.getElementById('studentUI').innerHTML = `
+    <div style="display:flex;gap:0.6em;align-items:center;flex-wrap:wrap;margin-bottom:0.5em;">
+      <span class="badge badge-level">${escHtml(st.level)}</span>
+      <span>${escHtml(st.scenario)}</span>
+      <span class="progress-label">${done}/${total} complete</span>
+    </div>
+    <div class="progress-bar"><div class="prog-fill" id="progFill" style="width:${pct}%"></div></div>
+    <div id="nextPromptBox" style="margin-top:1em;"></div>
+    <div id="aiCorrectionBlock"></div>
+    <hr/>
+    <div id="studentHistory"></div>`;
+
+        if (done >= total && total > 0) {
+          renderLevelComplete(st, total);
+        } else if (total === 0) {
+          document.getElementById('nextPromptBox').innerHTML =
+            "<p class='err'>No prompts found for this level/scenario combination.</p>";
+        } else {
+          renderNextPrompt(prompts[done]);
+        }
+        await renderStudentHistory(st);
+      }
+
+      function renderLevelComplete(st, total) {
+        const idx = LEVELS.indexOf(st.level);
+        const nextLevel = LEVELS[idx + 1];
+        const hasNext =
+          nextLevel &&
+          scenarioIndex[indexKey(st.scenario, nextLevel, 'system')]?.length;
+        document.getElementById('nextPromptBox').innerHTML = `
+    <div class="prompt-block" style="background:#e8faf0;">
+      <div class="prompt-txt">
+        🎉 <b>Level ${escHtml(st.level)} complete!</b> (${total}/${total} prompts)
+      </div>
+      ${
+        hasNext
+          ? `<button onclick="upgradeLevel('${escHtml(nextLevel)}')" style="background:#2fa37b;color:#fff;">
+             Next level: ${escHtml(nextLevel)}
+           </button>`
+          : `<span style="color:#555;">No higher level available for this scenario.</span>`
+      }
+      &nbsp;<button onclick="switchScenario()" style="margin-left:0.5em;">Switch Scenario</button>
+    </div>`;
+      }
+
+      function renderNextPrompt(pItem) {
+        document.getElementById('nextPromptBox').innerHTML = `
+    <div class="prompt-block">
+      <div class="prompt-txt"><b>AI Prompt:</b> ${escHtml(pItem.prompt)}</div>
+      <button class="speak-btn" id="speakPromptBtn">🔊 Hear Prompt</button>
+    </div>
+    <label>Your spoken response (type or record):
+      <textarea id="studReply" placeholder="Type your response here, or use the audio recorder below…"></textarea>
+    </label>
+    <div style="display:flex;gap:0.6em;flex-wrap:wrap;margin:0.5em 0;">
+      <button id="recBtn" type="button">🎤 Start Recording</button>
+      <audio id="userAudio" controls style="display:none;"></audio>
+    </div>
+    <button id="submitAttemptBtn" style="background:#23447a;color:#fff;">✅ Submit Attempt</button>`;
+
+        document.getElementById('speakPromptBtn').onclick = () =>
+          speak(pItem.prompt);
+        document.getElementById('recBtn').onclick = toggleRecording;
+        document.getElementById('submitAttemptBtn').onclick = onSubmitAttempt;
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // AUDIO RECORDING (MediaRecorder + Firebase Storage)
+      // ─────────────────────────────────────────────────────────────
+      let recChunks = [];
+      let recBlob = null;
+      let recUrl = null;
+      let recorder = null;
+      let recStream = null;
+
+      function toggleRecording() {
+        const btn = document.getElementById('recBtn');
+        if (!btn) return;
+        if (recorder && recorder.state === 'recording') {
+          recorder.stop();
+        } else {
+          startRecording();
+        }
+      }
+
+      function startRecording() {
+        const btn = document.getElementById('recBtn');
+        if (!navigator.mediaDevices) {
+          alert(
+            'Audio recording is not supported in this browser or requires HTTPS.',
+          );
+          return;
+        }
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            recStream = stream;
+            recChunks = [];
+            recBlob = null;
+            recUrl = null;
+            recorder = new MediaRecorder(stream);
+
+            recorder.ondataavailable = (e) => {
+              if (e.data.size > 0) recChunks.push(e.data);
+            };
+
+            recorder.onstop = async () => {
+              recStream.getTracks().forEach((t) => t.stop());
+              recBlob = new Blob(recChunks, { type: 'audio/webm' });
+              const localUrl = URL.createObjectURL(recBlob);
+              const audio = document.getElementById('userAudio');
+              if (audio) {
+                audio.src = localUrl;
+                audio.style.display = 'block';
+              }
+
+              // Upload to Firebase Storage
+              if (currentUser) {
+                try {
+                  const ref = storage.ref(
+                    `voice/${currentUser.uid}/${Date.now()}.webm`,
+                  );
+                  const snap = await ref.put(recBlob);
+                  recUrl = await snap.ref.getDownloadURL();
+                } catch (e) {
+                  console.warn('Storage upload failed:', e.message);
+                }
+              }
+
+              if (btn) {
+                btn.textContent = '🎤 Start Recording';
+                btn.classList.remove('recording');
+              }
+            };
+
+            recorder.start();
+            btn.textContent = '⏹ Stop Recording';
+            btn.classList.add('recording');
+          })
+          .catch((err) => {
+            alert('Microphone access denied: ' + err.message);
+          });
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // SUBMIT ATTEMPT & AI CORRECTION
+      // ─────────────────────────────────────────────────────────────
+      async function onSubmitAttempt() {
+        const st = await getStudentState();
+        const prompts =
+          scenarioIndex[indexKey(st.scenario, st.level, 'system')] || [];
+        const done = (st.progress || []).length;
+        if (done >= prompts.length) return;
+
+        const pItem = prompts[done];
+        const reply = (
+          document.getElementById('studReply')?.value || ''
+        ).trim();
+        const feedback = analyzeResponse(reply, pItem.prompt);
+
+        // Show correction immediately
+        const corrEl = document.getElementById('aiCorrectionBlock');
+        if (corrEl) {
+          corrEl.innerHTML = feedback.passed
+            ? `<div class="ai-correction success">
+           ✅ <b>Great job!</b> ${escHtml(feedback.message)}
+         </div>`
+            : `<div class="ai-correction">
+           ⚠️ <b>AI Feedback:</b> ${escHtml(feedback.message)}<br>
+           <em>Tip: ${escHtml(feedback.tip)}</em>
+         </div>`;
+        }
+
+        if (!feedback.passed) {
+          speak(feedback.tip);
+          return; // don't advance until the student retries or if auto-advance
+        }
+
+        // Record attempt in Firestore
+        const newProgress = [
+          ...(st.progress || []),
+          {
+            promptId: pItem.id || done,
+            passed: true,
+            audioUrl: recUrl || null,
+            reply,
+            ts: Date.now(),
+          },
+        ];
+        await db
+          .collection('progress')
+          .doc(currentUser.uid)
+          .update({
+            progress: newProgress,
+            correctStreak: (st.correctStreak || 0) + 1,
+          });
+
+        // Save to history
+        await db.collection('history').add({
+          uid: currentUser.uid,
+          scenario: st.scenario,
+          level: st.level,
+          prompt: pItem.prompt,
+          reply,
+          passed: true,
+          audioUrl: recUrl || null,
+          ts: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // Reset recording state
+        recBlob = null;
+        recUrl = null;
+        recChunks = [];
+
+        await renderStudentApp();
+      }
+
+      /**
+       * Simulated AI analysis.
+       * In production, replace this with a call to an AI API (e.g., OpenAI, Gemini).
+       *
+       * @param {string} reply   - The student's typed/transcribed response
+       * @param {string} prompt  - The original AI prompt
+       * @returns {{ passed: boolean, message: string, tip: string }}
+       */
+      function analyzeResponse(reply, prompt) {
+        if (!reply || reply.length < 3) {
+          return {
+            passed: false,
+            message: 'No response detected.',
+            tip: 'Please speak or type your response.',
+          };
+        }
+
+        // Rough heuristic checks (replace with real AI call)
+        const words = reply.trim().split(/\s+/);
+        const wordCount = words.length;
+        const hasQuestion = /[?]/.test(reply);
+
+        // Check for very short response
+        if (wordCount < 2) {
+          const issue = CORRECTION_PRIORITIES[0];
+          return {
+            passed: false,
+            message: `Response too short. ${issue.cmd}`,
+            tip: issue.example,
+          };
+        }
+
+        // Check for ALL CAPS (poor tone control simulation)
+        if (reply === reply.toUpperCase() && /[A-Z]/.test(reply)) {
+          const issue = CORRECTION_PRIORITIES[2];
+          return { passed: false, message: issue.cmd, tip: issue.example };
+        }
+
+        // Check that response isn't just the prompt repeated.
+        // We compare the first 15 characters of the prompt — long enough to
+        // catch obvious repetition while staying tolerant of short prompts
+        // (fewer than 15 chars are checked in full).
+        const PREFIX_CHECK_LEN = 15;
+        if (
+          reply
+            .toLowerCase()
+            .includes(prompt.toLowerCase().slice(0, PREFIX_CHECK_LEN))
+        ) {
+          const issue = CORRECTION_PRIORITIES[1];
+          return {
+            passed: false,
+            message: `Try to answer, not repeat the question. ${issue.cmd}`,
+            tip: issue.example,
+          };
+        }
+
+        return {
+          passed: true,
+          message: `Well done! Response accepted (${wordCount} words).${hasQuestion ? ' Good use of question form!' : ''}`,
+        };
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // LEVEL UPGRADE / SCENARIO SWITCH
+      // ─────────────────────────────────────────────────────────────
+      window.upgradeLevel = async function (nextLevel) {
+        await db.collection('progress').doc(currentUser.uid).update({
+          level: nextLevel,
+          progress: [],
+          correctStreak: 0,
+        });
+        await renderStudentApp();
+      };
+
+      window.switchScenario = async function () {
+        await db.collection('progress').doc(currentUser.uid).update({
+          progress: [],
+          correctStreak: 0,
+        });
+        await renderStudent();
+      };
+
+      // ─────────────────────────────────────────────────────────────
+      // STUDENT HISTORY
+      // ─────────────────────────────────────────────────────────────
+      async function renderStudentHistory(st) {
+        const histEl = document.getElementById('studentHistory');
+        if (!histEl || !currentUser) return;
+        try {
+          const snap = await db
+            .collection('history')
+            .where('uid', '==', currentUser.uid)
+            .orderBy('ts', 'desc')
+            .limit(10)
+            .get();
+
+          if (snap.empty) {
+            histEl.innerHTML =
+              "<p style='color:#888;font-size:0.9em;'>No history yet.</p>";
+            return;
+          }
+
+          histEl.innerHTML = '<b>Recent Attempts:</b>';
+          snap.docs.forEach((doc) => {
+            const h = doc.data();
+            const dt = h.ts?.toDate?.()?.toLocaleString?.() || '—';
+            histEl.insertAdjacentHTML(
+              'beforeend',
+              `
+        <div class="history-tile ${h.passed ? 'pass' : 'fail'}">
+          <span class="badge ${h.passed ? 'badge-pass' : 'badge-fail'}">${h.passed ? 'PASS' : 'FAIL'}</span>
+          <span class="badge badge-level" style="margin-left:0.4em;">${escHtml(h.level || '')}</span>
+          <b style="margin-left:0.4em;">${escHtml(h.scenario || '')}</b>
+          <br><em>${escHtml(h.prompt || '')}</em>
+          <br>Your reply: ${escHtml(h.reply || '')}
+          ${h.audioUrl ? `<br><audio controls src="${escHtml(h.audioUrl)}" style="height:28px;margin-top:4px;"></audio>` : ''}
+          <br><small>${dt}</small>
+        </div>`,
+            );
+          });
+        } catch (e) {
+          histEl.innerHTML = `<p class="err">Could not load history: ${escHtml(e.message)}</p>`;
+        }
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // TTS — Text-to-Speech (Web Speech API)
+      // ─────────────────────────────────────────────────────────────
+      function speak(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate = 0.95;
+        utt.pitch = 1;
+        window.speechSynthesis.speak(utt);
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // COACH / ADMIN PORTAL
+      // ─────────────────────────────────────────────────────────────
+      async function renderCoach() {
+        const coachCard = document.getElementById('coachCard');
+        if (!currentUser) {
+          coachCard.innerHTML =
+            '<p>Please sign in to access the Coach portal.</p>';
+          return;
+        }
+        await loadScenarioBank();
+
+        coachCard.innerHTML = `
+    <h2 style="margin-top:0;">Coach / Admin Portal</h2>
+
+    <!-- Add new scenario prompt -->
+    <div class="scenario-editor">
+      <b>Add New Scenario Prompt</b>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5em;margin:0.6em 0;">
+        <label>Scenario name<input type="text" id="newScenName" placeholder="e.g. restaurant"></label>
+        <label>Level
+          <select id="newScenLevel">${LEVELS.map((l) => `<option>${l}</option>`).join('')}</select>
+        </label>
+        <label>Role
+          <select id="newScenRole">
+            <option value="system">system (AI prompt)</option>
+            <option value="student">student (sample answer)</option>
+          </select>
+        </label>
+      </div>
+      <label>Prompt text
+        <textarea id="newScenPrompt" placeholder="Enter the AI prompt…"></textarea>
+      </label>
+      <button id="addScenBtn" style="background:#23447a;color:#fff;">➕ Add Prompt</button>
+      <span id="addScenMsg"></span>
+    </div>
+
+    <!-- Scenario filter & list -->
+    <div>
+      <b>Existing Scenarios</b>
+      <div style="margin:0.4em 0;display:flex;gap:0.5em;flex-wrap:wrap;">
+        <label style="margin:0;">Filter by scenario:
+          <select id="filterScen">
+            <option value="">— All —</option>
+            ${distinctScenarios()
+              .map((s) => `<option>${escHtml(s)}</option>`)
+              .join('')}
+          </select>
+        </label>
+        <label style="margin:0;">Filter by level:
+          <select id="filterLevel">
+            <option value="">— All —</option>
+            ${LEVELS.map((l) => `<option>${l}</option>`).join('')}
+          </select>
+        </label>
+        <button id="filterBtn">Filter</button>
+      </div>
+      <div class="prompt-list" id="scenList"></div>
+    </div>`;
+
+        document.getElementById('addScenBtn').onclick = addScenario;
+        document.getElementById('filterBtn').onclick = () =>
+          renderScenarioList();
+
+        renderScenarioList();
+      }
+
+      function renderScenarioList(filterScen, filterLevel) {
+        const scen =
+          filterScen ?? (document.getElementById('filterScen')?.value || '');
+        const level =
+          filterLevel ?? (document.getElementById('filterLevel')?.value || '');
+        const el = document.getElementById('scenList');
+        if (!el) return;
+
+        let rows = ALL_SCENARIOS;
+        if (scen) rows = rows.filter((r) => r.scenario === scen);
+        if (level) rows = rows.filter((r) => r.level === level);
+
+        if (!rows.length) {
+          el.innerHTML = "<p style='color:#888;'>No scenarios found.</p>";
+          return;
+        }
+
+        el.innerHTML = rows
+          .map(
+            (r) => `
+    <div class="prompt-list-item">
+      <span>
+        <span class="badge badge-level">${escHtml(r.level)}</span>
+        <b style="margin:0 0.4em;">${escHtml(r.scenario)}</b>
+        <em>${escHtml(r.prompt)}</em>
+      </span>
+      <button onclick="deleteScenario('${escHtml(r.id)}')" title="Delete"
+        style="background:#f8e8e8;color:#c12000;padding:0.2em 0.6em;flex-shrink:0;">🗑</button>
+    </div>`,
+          )
+          .join('');
+      }
+
+      async function addScenario() {
+        const scenario = document.getElementById('newScenName')?.value.trim();
+        const level = document.getElementById('newScenLevel')?.value;
+        const role = document.getElementById('newScenRole')?.value;
+        const prompt = document.getElementById('newScenPrompt')?.value.trim();
+        const msgEl = document.getElementById('addScenMsg');
+
+        if (!scenario || !prompt) {
+          if (msgEl)
+            msgEl.innerHTML = `<span class="err"> ✗ Scenario name and prompt are required.</span>`;
+          return;
+        }
+
+        try {
+          await db
+            .collection('scenarios')
+            .add({ scenario, level, role, prompt });
+          if (msgEl) msgEl.innerHTML = `<span class="success"> ✓ Added!</span>`;
+          // Clear fields
+          document.getElementById('newScenName').value = '';
+          document.getElementById('newScenPrompt').value = '';
+          await loadScenarioBank();
+          renderScenarioList();
+        } catch (e) {
+          if (msgEl)
+            msgEl.innerHTML = `<span class="err"> ✗ ${escHtml(e.message)}</span>`;
+        }
+      }
+
+      window.deleteScenario = async function (id) {
+        if (!confirm('Delete this prompt?')) return;
+        try {
+          await db.collection('scenarios').doc(id).delete();
+          await loadScenarioBank();
+          renderScenarioList();
+        } catch (e) {
+          alert('Delete failed: ' + e.message);
+        }
+      };
+
+      // ─────────────────────────────────────────────────────────────
+      // UTILITY
+      // ─────────────────────────────────────────────────────────────
+
+      /** Escape a string for safe HTML insertion. */
+      function escHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+    </script>
+  </body>
+</html>

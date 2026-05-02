@@ -24,10 +24,7 @@
     "bump": "pnpx bumpp"
   },
   "simple-git-hooks": {
-    "pre-commit": [
-      "rslint",
-      "prettier -w"
-    ]
+    "pre-commit": "pnpm exec rslint && pnpm exec prettier -w ."
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
