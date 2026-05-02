@@ -13,3 +13,7 @@ test-results
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea
+
+# Firebase secrets — NEVER commit service account keys
+scripts/serviceAccountKey.json
+serviceAccountKey.json

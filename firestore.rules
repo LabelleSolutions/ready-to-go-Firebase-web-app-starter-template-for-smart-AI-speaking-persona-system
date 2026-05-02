@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Progress ──────────────────────────────────────────────────────────────
+    // Each student can only read and write their own progress document.
+    match /progress/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
+    // ── History ───────────────────────────────────────────────────────────────
+    // A student may read their own history entries.
+    // A student may create a new history entry only if the uid field matches
+    // their authenticated uid (prevents writing on behalf of other users).
+    match /history/{doc} {
+      allow read: if request.auth != null
+                  && resource.data.uid == request.auth.uid;
+
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+
+      // Deny updates and deletes from the client side.
+      allow update, delete: if false;
+    }
+
+    // ── Scenario Bank ─────────────────────────────────────────────────────────
+    // Any authenticated user can read scenarios (students need to see prompts).
+    // Only users with the custom claim `admin == true` can write scenarios.
+    //
+    // To assign the admin claim to a Coach, run (server side / Firebase Admin SDK):
+    //   admin.auth().setCustomUserClaims(uid, { admin: true });
+    match /scenarios/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.token.admin == true;
+    }
+  }
+}

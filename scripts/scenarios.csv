@@ -1,0 +1,63 @@
+scenario,level,role,prompt
+restaurant,A1,system,Welcome! Do you have a reservation?
+restaurant,A1,system,How many people are in your party?
+restaurant,A1,system,Would you like a table by the window?
+restaurant,A1,system,May I take your order?
+restaurant,A1,system,Would you like something to drink?
+restaurant,A2,system,Can I tell you about our specials today?
+restaurant,A2,system,How would you like your steak cooked?
+restaurant,A2,system,Is there anything on the menu you have questions about?
+restaurant,B1,system,Could you describe the dish you'd recommend most?
+restaurant,B1,system,I'm afraid we're out of that item. May I suggest an alternative?
+restaurant,B2,system,Our chef has prepared a tasting menu this evening. Shall I walk you through it?
+restaurant,C1,system,I'd like to discuss a dietary requirement — could you advise on suitable options?
+hotel,A1,system,Good morning! How can I help you?
+hotel,A1,system,Do you have a booking with us?
+hotel,A1,system,Would you like a single or double room?
+hotel,A1,system,How many nights will you be staying?
+hotel,A2,system,Would you like a room with a sea view?
+hotel,A2,system,Breakfast is served from seven to ten. Will you be joining us?
+hotel,B1,system,I'm afraid your room isn't ready yet. May I offer you a complimentary coffee while you wait?
+hotel,B1,system,Could I ask you to complete this registration form?
+hotel,B2,system,I'd like to arrange a late checkout. Is that possible?
+hotel,C1,system,We've noticed an issue with your booking — could you clarify the dates for me?
+airport,A1,system,May I see your passport and boarding pass?
+airport,A1,system,Did you pack this bag yourself?
+airport,A1,system,Please place your liquids in a clear bag.
+airport,A2,system,Your flight is boarding at gate fourteen. Do you need directions?
+airport,A2,system,Would you like an aisle or a window seat?
+airport,B1,system,I'm afraid your flight has been delayed by two hours. How can I assist you?
+airport,B1,system,Could you describe the contents of your checked luggage?
+airport,B2,system,You'll need to transfer at the connecting airport — let me explain the process.
+airport,C1,system,Due to weather conditions your route has changed. Let me outline your new itinerary.
+job_interview,A2,system,Please tell me a little about yourself.
+job_interview,A2,system,Why are you interested in this position?
+job_interview,B1,system,What are your main strengths?
+job_interview,B1,system,Can you describe a challenge you have faced at work and how you handled it?
+job_interview,B2,system,Where do you see yourself in five years?
+job_interview,B2,system,How do you handle working under pressure?
+job_interview,C1,system,Could you walk me through a project where you demonstrated leadership?
+job_interview,C1,system,How would you approach a disagreement with a senior colleague?
+job_interview,C2,system,What strategic value do you believe you would bring to this organisation?
+shopping,A1,system,Hello! Are you looking for anything in particular?
+shopping,A1,system,What size are you looking for?
+shopping,A1,system,We have this in three colours. Which do you prefer?
+shopping,A2,system,Would you like to try it on?
+shopping,A2,system,We're currently running a fifty-percent sale. Can I show you our offers?
+shopping,B1,system,I'm afraid we don't have your size in stock. Would you like me to order it?
+shopping,B1,system,Do you have a loyalty card with us?
+shopping,B2,system,Could I ask for your feedback on your shopping experience today?
+doctor,A1,system,What seems to be the problem?
+doctor,A1,system,How long have you had these symptoms?
+doctor,A2,system,On a scale of one to ten, how would you rate the pain?
+doctor,A2,system,Are you currently taking any medication?
+doctor,B1,system,Can you describe where exactly the pain is located?
+doctor,B1,system,Have you experienced this before?
+doctor,B2,system,I'd like to refer you to a specialist. How do you feel about that?
+doctor,C1,system,Let's discuss the possible treatment options and their implications.
+bank,A2,system,How can I help you today?
+bank,A2,system,Would you like to open a savings or current account?
+bank,B1,system,Could you verify your identity by answering a security question?
+bank,B1,system,I see there's an unfamiliar transaction on your account. Can you recall this purchase?
+bank,B2,system,Would you like me to explain the terms of the loan agreement?
+bank,C1,system,Let's review your financial goals and discuss suitable investment products.
