@@ -61,25 +61,40 @@ fs.createReadStream(CSV_FILE)
   .pipe(csv())
   .on('data', (row) => {
     const { scenario, level, role, prompt } = row;
+    const normalizedScenario = scenario?.trim();
+    const normalizedLevel = level?.trim().toUpperCase();
+    const normalizedRole = role?.trim().toLowerCase();
+    const normalizedPrompt = prompt?.trim();
 
-    if (!scenario || !level || !role || !prompt) {
+    if (
+      !normalizedScenario ||
+      !normalizedLevel ||
+      !normalizedRole ||
+      !normalizedPrompt
+    ) {
       console.warn('⚠ Skipping incomplete row:', row);
       return;
     }
-    if (!VALID_LEVELS.has(level)) {
-      console.warn(`⚠ Skipping row with unknown level "${level}":`, row);
+    if (!VALID_LEVELS.has(normalizedLevel)) {
+      console.warn(
+        `⚠ Skipping row with unknown level "${normalizedLevel}":`,
+        row,
+      );
       return;
     }
-    if (!VALID_ROLES.has(role)) {
-      console.warn(`⚠ Skipping row with unknown role "${role}":`, row);
+    if (!VALID_ROLES.has(normalizedRole)) {
+      console.warn(
+        `⚠ Skipping row with unknown role "${normalizedRole}":`,
+        row,
+      );
       return;
     }
 
     rows.push({
-      scenario: scenario.trim(),
-      level: level.trim(),
-      role: role.trim(),
-      prompt: prompt.trim(),
+      scenario: normalizedScenario,
+      level: normalizedLevel,
+      role: normalizedRole,
+      prompt: normalizedPrompt,
     });
   })
   .on('end', async () => {
